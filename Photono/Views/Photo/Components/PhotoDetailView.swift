@@ -26,7 +26,7 @@ struct PhotoDetailView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.white.ignoresSafeArea()
             
             if let image = fullSizeImage {
                 photoImage(image)
@@ -69,7 +69,7 @@ struct PhotoDetailView: View {
     
     @ViewBuilder
     private var progressView: some View {
-        ProgressView("読み込み中...")
+        ProgressView("Loading…")
             .foregroundColor(.white)
     }
     
@@ -79,7 +79,7 @@ struct PhotoDetailView: View {
             Image(systemName: "photo")
                 .font(.system(size: 60))
                 .foregroundColor(.gray)
-            Text("画像を読み込めませんでした")
+            Text("Failed to load image.")
                 .foregroundColor(.gray)
         }
     }

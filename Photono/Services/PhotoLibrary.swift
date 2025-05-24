@@ -76,20 +76,3 @@ actor PhotoLibrary {
     }
 }
 
-/// フォトライブラリのアセットを表現するモデル
-struct PhotoAsset: Identifiable {
-    let id = UUID()
-    let asset: PHAsset
-    
-    var creationDate: Date? {
-        asset.creationDate
-    }
-    
-    var location: CLLocation? {
-        asset.location
-    }
-    
-    var isFavorite: Bool {
-        asset.isFavorite
-    }
-}

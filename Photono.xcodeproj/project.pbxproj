@@ -9,12 +9,14 @@
 /* Begin PBXBuildFile section */
 		9536C8FE2DE11D3700C2CBE5 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 9536C8FD2DE11D3700C2CBE5 /* .gitignore */; };
 		9536C9002DE11D4100C2CBE5 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9536C8FF2DE11D4100C2CBE5 /* README.md */; };
+		AE2F33392DE1C1E500D12670 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = AE2F33382DE1C1E500D12670 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		9536C8DC2DE1179700C2CBE5 /* Photono.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Photono.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9536C8FD2DE11D3700C2CBE5 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		9536C8FF2DE11D4100C2CBE5 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AE2F33382DE1C1E500D12670 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -39,6 +41,7 @@
 		9536C8D32DE1179700C2CBE5 = {
 			isa = PBXGroup;
 			children = (
+				AE2F33382DE1C1E500D12670 /* Localizable.xcstrings */,
 				9536C8DE2DE1179700C2CBE5 /* Photono */,
 				9536C8DD2DE1179700C2CBE5 /* Products */,
 				9536C8FD2DE11D3700C2CBE5 /* .gitignore */,
@@ -100,6 +103,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ja,
 			);
 			mainGroup = 9536C8D32DE1179700C2CBE5;
 			minimizedProjectReferenceProxies = 1;
@@ -119,6 +123,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9536C9002DE11D4100C2CBE5 /* README.md in Resources */,
+				AE2F33392DE1C1E500D12670 /* Localizable.xcstrings in Resources */,
 				9536C8FE2DE11D3700C2CBE5 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -196,6 +201,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -253,6 +259,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

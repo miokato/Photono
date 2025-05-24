@@ -65,16 +65,16 @@ struct PhotoView: View {
                     permissionView
                 }
             }
-            .navigationTitle("写真")
+            .navigationTitle("photo")
             .navigationBarTitleDisplayMode(.inline)
             .task { await requestPermissionAndLoadPhotos() }
-            .alert("写真へのアクセスが必要です", isPresented: $showingPermissionAlert) {
-                Button("設定を開く") {
+            .alert("Photo access is required.", isPresented: $showingPermissionAlert) {
+                Button("Open Settings") {
                     openSettings()
                 }
-                Button("キャンセル", role: .cancel) { }
+                Button("Cancel", role: .cancel) { }
             } message: {
-                Text("カメラロールの写真を表示するために、写真へのアクセス許可が必要です。")
+                Text("Please grant photo access to display images from the camera roll.")
             }
         }
     }
@@ -98,7 +98,7 @@ struct PhotoView: View {
         }
         .overlay {
             if isLoading {
-                ProgressView("読み込み中...")
+                ProgressView("Loading…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.black.opacity(0.3))
             }
@@ -112,16 +112,16 @@ struct PhotoView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.gray)
             
-            Text("写真へのアクセスが必要です")
+            Text("Photo access is required.")
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("カメラロールの写真を表示するために、写真へのアクセス許可をお願いします。")
+            Text("Please grant photo access to display images from the camera roll.")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
             
-            Button("許可する") {
+            Button("Allow") {
                 Task {
                     await requestPermissionAndLoadPhotos()
                 }
@@ -134,4 +134,5 @@ struct PhotoView: View {
 
 #Preview {
     PhotoView()
+        .environment(\.locale, Locale(identifier: "ja"))
 }
