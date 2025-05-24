@@ -69,9 +69,7 @@ struct PhotoView: View {
             .navigationBarTitleDisplayMode(.inline)
             .task { await requestPermissionAndLoadPhotos() }
             .alert("Photo access is required.", isPresented: $showingPermissionAlert) {
-                Button("Open Settings") {
-                    openSettings()
-                }
+                Button("Open Settings") { openSettings() }
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Please grant photo access to display images from the camera roll.")
@@ -82,16 +80,14 @@ struct PhotoView: View {
     @ViewBuilder
     private var photoGridView: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 2) {
+            LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(photos) { photoAsset in
                     NavigationLink(destination: PhotoDetailView(photoAsset: photoAsset)) {
                         AsyncPhotoView(photoAsset: photoAsset)
-                            .aspectRatio(1, contentMode: .fill)
-                            .clipped()
                     }
                 }
             }
-            .padding(.horizontal, 2)
+            .padding(.horizontal, 8)
         }
         .refreshable {
             await loadPhotos()
