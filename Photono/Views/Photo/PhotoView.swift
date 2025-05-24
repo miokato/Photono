@@ -17,80 +17,8 @@ struct PhotoView: View {
     let columns = [
         GridItem(.adaptive(minimum: 100), spacing: 2)
     ]
-    
-    var body: some View {
-        NavigationView {
-            Group {
-                if hasPermission {
-                    photoGridView
-                } else {
-                    permissionView
-                }
-            }
-            .navigationTitle("写真")
-            .task {
-                await requestPermissionAndLoadPhotos()
-            }
-            .alert("写真へのアクセスが必要です", isPresented: $showingPermissionAlert) {
-                Button("設定を開く") {
-                    openSettings()
-                }
-                Button("キャンセル", role: .cancel) { }
-            } message: {
-                Text("カメラロールの写真を表示するために、写真へのアクセス許可が必要です。")
-            }
-        }
-    }
-    
-    private var photoGridView: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: 2) {
-                ForEach(photos) { photoAsset in
-                    NavigationLink(destination: PhotoDetailView(photoAsset: photoAsset)) {
-                        AsyncPhotoView(photoAsset: photoAsset)
-                            .aspectRatio(1, contentMode: .fill)
-                            .clipped()
-                    }
-                }
-            }
-            .padding(.horizontal, 2)
-        }
-        .refreshable {
-            await loadPhotos()
-        }
-        .overlay {
-            if isLoading {
-                ProgressView("読み込み中...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.opacity(0.3))
-            }
-        }
-    }
-    
-    private var permissionView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "photo.on.rectangle")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
-            
-            Text("写真へのアクセスが必要です")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Text("カメラロールの写真を表示するために、写真へのアクセス許可をお願いします。")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            Button("許可する") {
-                Task {
-                    await requestPermissionAndLoadPhotos()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding()
-    }
+   
+    // MARK: - private methods
     
     private func requestPermissionAndLoadPhotos() async {
         isLoading = true
@@ -123,6 +51,83 @@ struct PhotoView: View {
         if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(settingsUrl)
         }
+    }
+    
+    // MARK: - body
+    
+    var body: some View {
+        NavigationStack {
+            Group {
+                if hasPermission {
+                    photoGridView
+                } else {
+                    permissionView
+                }
+            }
+            .navigationTitle("写真")
+            .navigationBarTitleDisplayMode(.inline)
+            .task { await requestPermissionAndLoadPhotos() }
+            .alert("写真へのアクセスが必要です", isPresented: $showingPermissionAlert) {
+                Button("設定を開く") {
+                    openSettings()
+                }
+                Button("キャンセル", role: .cancel) { }
+            } message: {
+                Text("カメラロールの写真を表示するために、写真へのアクセス許可が必要です。")
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var photoGridView: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 2) {
+                ForEach(photos) { photoAsset in
+                    NavigationLink(destination: PhotoDetailView(photoAsset: photoAsset)) {
+                        AsyncPhotoView(photoAsset: photoAsset)
+                            .aspectRatio(1, contentMode: .fill)
+                            .clipped()
+                    }
+                }
+            }
+            .padding(.horizontal, 2)
+        }
+        .refreshable {
+            await loadPhotos()
+        }
+        .overlay {
+            if isLoading {
+                ProgressView("読み込み中...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black.opacity(0.3))
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var permissionView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "photo.on.rectangle")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+            
+            Text("写真へのアクセスが必要です")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            Text("カメラロールの写真を表示するために、写真へのアクセス許可をお願いします。")
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+            
+            Button("許可する") {
+                Task {
+                    await requestPermissionAndLoadPhotos()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
     }
 }
 

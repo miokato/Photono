@@ -10,8 +10,23 @@ import SwiftUI
 /// 非同期で画像を読み込んで表示するビュー
 struct AsyncPhotoView: View {
     let photoAsset: PhotoAsset
+    
     @State private var image: UIImage?
     @State private var isLoading = true
+    
+    private func loadImage() async {
+        let loadedImage = await PhotoLibrary.shared.loadImage(
+            for: photoAsset,
+            targetSize: CGSize(width: 200, height: 200)
+        )
+        
+        await MainActor.run {
+            image = loadedImage
+            isLoading = false
+        }
+    }
+    
+    // MARK: - body
     
     var body: some View {
         Group {
@@ -30,21 +45,7 @@ struct AsyncPhotoView: View {
                     .background(Color.gray.opacity(0.2))
             }
         }
-        .task {
-            await loadImage()
-        }
-    }
-    
-    private func loadImage() async {
-        let loadedImage = await PhotoLibrary.shared.loadImage(
-            for: photoAsset,
-            targetSize: CGSize(width: 200, height: 200)
-        )
-        
-        await MainActor.run {
-            image = loadedImage
-            isLoading = false
-        }
+        .task { await loadImage() }
     }
 }
 
