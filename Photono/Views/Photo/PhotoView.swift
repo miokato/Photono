@@ -107,28 +107,9 @@ struct PhotoView: View {
     
     @ViewBuilder
     private var permissionView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "photo.on.rectangle")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
-            
-            Text("Photo access is required.")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Text("Please grant photo access to display images from the camera roll.")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            Button("Allow") {
-                Task {
-                    await requestPermissionAndLoadPhotos()
-                }
-            }
-            .buttonStyle(.borderedProminent)
+        PhotoPermissionView {
+            Task { await requestPermissionAndLoadPhotos() }
         }
-        .padding()
     }
 }
 
