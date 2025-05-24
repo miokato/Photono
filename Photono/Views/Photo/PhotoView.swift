@@ -67,7 +67,10 @@ struct PhotoView: View {
             }
             .navigationTitle("photo")
             .navigationBarTitleDisplayMode(.inline)
-            .task { await requestPermissionAndLoadPhotos() }
+            .task {
+                guard photos.isEmpty else { return }
+                await requestPermissionAndLoadPhotos()
+            }
             .alert("Photo access is required.", isPresented: $showingPermissionAlert) {
                 Button("Open Settings") { openSettings() }
                 Button("Cancel", role: .cancel) { }
