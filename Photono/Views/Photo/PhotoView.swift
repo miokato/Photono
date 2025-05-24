@@ -15,7 +15,8 @@ struct PhotoView: View {
     @State private var showingPermissionAlert = false
     
     let columns = [
-        GridItem(.adaptive(minimum: 100), spacing: 2)
+        GridItem(.flexible()),
+        GridItem(.flexible())
     ]
    
     // MARK: - private methods
