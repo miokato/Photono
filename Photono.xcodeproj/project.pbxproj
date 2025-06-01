@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		9536C8FE2DE11D3700C2CBE5 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 9536C8FD2DE11D3700C2CBE5 /* .gitignore */; };
 		9536C9002DE11D4100C2CBE5 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9536C8FF2DE11D4100C2CBE5 /* README.md */; };
+		AE22193C2DEC48D100519963 /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = AE22193B2DEC48D100519963 /* CLAUDE.md */; };
 		AE2F33392DE1C1E500D12670 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = AE2F33382DE1C1E500D12670 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
@@ -16,6 +17,7 @@
 		9536C8DC2DE1179700C2CBE5 /* Photono.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Photono.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9536C8FD2DE11D3700C2CBE5 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		9536C8FF2DE11D4100C2CBE5 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AE22193B2DEC48D100519963 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		AE2F33382DE1C1E500D12670 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -46,6 +48,7 @@
 				9536C8DD2DE1179700C2CBE5 /* Products */,
 				9536C8FD2DE11D3700C2CBE5 /* .gitignore */,
 				9536C8FF2DE11D4100C2CBE5 /* README.md */,
+				AE22193B2DEC48D100519963 /* CLAUDE.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -124,6 +127,7 @@
 			files = (
 				9536C9002DE11D4100C2CBE5 /* README.md in Resources */,
 				AE2F33392DE1C1E500D12670 /* Localizable.xcstrings in Resources */,
+				AE22193C2DEC48D100519963 /* CLAUDE.md in Resources */,
 				9536C8FE2DE11D3700C2CBE5 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
