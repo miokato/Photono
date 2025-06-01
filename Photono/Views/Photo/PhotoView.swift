@@ -84,8 +84,8 @@ struct PhotoView: View {
     private var photoGridView: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(photos) { photoAsset in
-                    NavigationLink(destination: PhotoDetailView(photoAsset: photoAsset)) {
+                ForEach(Array(photos.enumerated()), id: \.element.id) { index, photoAsset in
+                    NavigationLink(destination: PhotoDetailView(photos: photos, currentIndex: index)) {
                         AsyncPhotoView(photoAsset: photoAsset)
                     }
                 }
