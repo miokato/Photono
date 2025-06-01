@@ -11,6 +11,10 @@ extension ApplicationMusicPlayer: @unchecked @retroactive Sendable {}
 actor MusicPlayer {
     private let player = ApplicationMusicPlayer.shared
     
+    var isPlaying: Bool {
+        player.state.playbackStatus == .playing
+    }
+    
     func setSong(with appleId: String) async throws {
         let songs = try await getMusicItem(by: appleId)
         player.queue = .init(for: songs)
@@ -28,6 +32,14 @@ actor MusicPlayer {
     
     func stop() {
         player.stop()
+    }
+    
+    func skipToNextEntry() async throws {
+        try await player.skipToNextEntry()
+    }
+    
+    func skipToPreviousEntry() async throws {
+        try await player.skipToPreviousEntry()
     }
     
     func forward() {

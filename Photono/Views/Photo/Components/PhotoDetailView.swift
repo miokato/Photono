@@ -229,6 +229,17 @@ struct PhotoDetailView: View {
                         .offset(x: geometry.size.width + dragOffset)
                         .opacity(dragOffset < 0 ? 1 : 0)
                 }
+                
+                // MiniPlayerView を画面下部に配置
+                VStack {
+                    Spacer()
+                    MiniPlayerView(
+                        musicPlayer: $musicPlayer,
+                        isPlaying: $isPlaying
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
+                }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
