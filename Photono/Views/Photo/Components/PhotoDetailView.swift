@@ -27,6 +27,8 @@ struct PhotoDetailView: View {
     @State private var baseZoomScale: CGFloat = 1.0
     @State private var zoomOffset: CGSize = .zero
     @State private var isZoomed: Bool = false
+    @State private var currentSongTitle: String = "Loading..."
+    @State private var currentArtist: String = ""
     
     private var currentPhotoAsset: PhotoAsset {
         photos[currentIndex]
@@ -114,14 +116,20 @@ struct PhotoDetailView: View {
             let status = await MusicAuthorization.request()
             guard status == .authorized else { return }
             
-            let sampleSongID = "1450695739"
-            try await musicPlayer.setSong(with: sampleSongID)
+            let songInfo = try await musicPlayer.setRandomSong()
             try await musicPlayer.play()
+            
             await MainActor.run {
                 isPlaying = true
+                currentSongTitle = songInfo.title
+                currentArtist = songInfo.artist
             }
         } catch {
             print("Music setup failed: \(error)")
+            await MainActor.run {
+                currentSongTitle = "Failed to load"
+                currentArtist = "Error"
+            }
         }
     }
     
@@ -235,7 +243,9 @@ struct PhotoDetailView: View {
                     Spacer()
                     MiniPlayerView(
                         musicPlayer: $musicPlayer,
-                        isPlaying: $isPlaying
+                        isPlaying: $isPlaying,
+                        currentSong: $currentSongTitle,
+                        currentArtist: $currentArtist
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, 20)

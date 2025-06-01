@@ -11,8 +11,8 @@ import MusicKit
 struct MiniPlayerView: View {
     @Binding var musicPlayer: MusicPlayer
     @Binding var isPlaying: Bool
-    @State private var currentSong: String = "Sample Song"
-    @State private var currentArtist: String = "Sample Artist"
+    @Binding var currentSong: String
+    @Binding var currentArtist: String
     
     private func togglePlayPause() {
         Task {
@@ -21,6 +21,14 @@ struct MiniPlayerView: View {
                     await musicPlayer.pause()
                     isPlaying = false
                 } else {
+                    // 楽曲が設定されていない場合は新しいランダム楽曲を設定
+                    if currentSong == "Loading..." || currentSong == "Failed to load" {
+                        let songInfo = try await musicPlayer.setRandomSong()
+                        await MainActor.run {
+                            currentSong = songInfo.title
+                            currentArtist = songInfo.artist
+                        }
+                    }
                     try await musicPlayer.play()
                     isPlaying = true
                 }
@@ -40,7 +48,14 @@ struct MiniPlayerView: View {
     private func skipToPrevious() {
         Task {
             do {
-                try await musicPlayer.skipToPreviousEntry()
+                let songInfo = try await musicPlayer.setRandomSong()
+                try await musicPlayer.play()
+                
+                await MainActor.run {
+                    isPlaying = true
+                    currentSong = songInfo.title
+                    currentArtist = songInfo.artist
+                }
             } catch {
                 print("Skip to previous error: \(error)")
             }
@@ -50,7 +65,14 @@ struct MiniPlayerView: View {
     private func skipToNext() {
         Task {
             do {
-                try await musicPlayer.skipToNextEntry()
+                let songInfo = try await musicPlayer.setRandomSong()
+                try await musicPlayer.play()
+                
+                await MainActor.run {
+                    isPlaying = true
+                    currentSong = songInfo.title
+                    currentArtist = songInfo.artist
+                }
             } catch {
                 print("Skip to next error: \(error)")
             }
@@ -113,6 +135,8 @@ struct MiniPlayerView: View {
 #Preview {
     MiniPlayerView(
         musicPlayer: .constant(MusicPlayer()),
-        isPlaying: .constant(false)
+        isPlaying: .constant(false),
+        currentSong: .constant("Sample Song"),
+        currentArtist: .constant("Sample Artist")
     )
 }
