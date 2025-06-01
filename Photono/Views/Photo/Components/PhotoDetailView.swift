@@ -116,13 +116,52 @@ struct PhotoDetailView: View {
             let status = await MusicAuthorization.request()
             guard status == .authorized else { return }
             
-            let songInfo = try await musicPlayer.setRandomSong()
-            try await musicPlayer.play()
-            
-            await MainActor.run {
-                isPlaying = true
-                currentSongTitle = songInfo.title
-                currentArtist = songInfo.artist
+            // 既存の音楽がある場合の処理
+            if await musicPlayer.hasQueue {
+                let playbackStatus = await musicPlayer.playbackStatus
+                let currentPlaying = await musicPlayer.isPlaying
+                
+                // 現在の楽曲情報を取得
+                if let songInfo = await musicPlayer.currentSongInfo {
+                    await MainActor.run {
+                        currentSongTitle = songInfo.title
+                        currentArtist = songInfo.artist
+                        isPlaying = currentPlaying
+                    }
+                }
+                
+                // 一時停止中の場合のみ再生を再開（停止中は新しい曲をロード）
+                if playbackStatus == .paused {
+                    try await musicPlayer.play()
+                    await MainActor.run {
+                        isPlaying = true
+                    }
+                }
+                // 既に再生中の場合は何もしない
+                else if playbackStatus == .playing {
+                    return
+                }
+                // 停止中の場合は新しい曲をロード
+                else {
+                    let songInfo = try await musicPlayer.setRandomSong()
+                    try await musicPlayer.play()
+                    
+                    await MainActor.run {
+                        isPlaying = true
+                        currentSongTitle = songInfo.title
+                        currentArtist = songInfo.artist
+                    }
+                }
+            } else {
+                // キューが空の場合は新しい曲をセット
+                let songInfo = try await musicPlayer.setRandomSong()
+                try await musicPlayer.play()
+                
+                await MainActor.run {
+                    isPlaying = true
+                    currentSongTitle = songInfo.title
+                    currentArtist = songInfo.artist
+                }
             }
         } catch {
             print("Music setup failed: \(error)")
@@ -204,6 +243,27 @@ struct PhotoDetailView: View {
         baseZoomScale = 1.0
         zoomOffset = .zero
         isZoomed = false
+    }
+    
+    private func updateCurrentSongInfo() async {
+        print("🎵 updateCurrentSongInfo called")
+        let hasQueue = await musicPlayer.hasQueue
+        print("🎵 hasQueue: \(hasQueue)")
+        
+        if hasQueue {
+            let songInfo = await musicPlayer.currentSongInfo
+            print("🎵 songInfo: \(String(describing: songInfo))")
+            
+            if let songInfo = songInfo {
+                let currentPlaying = await musicPlayer.isPlaying
+                print("🎵 Updating UI with: \(songInfo.title) by \(songInfo.artist)")
+                await MainActor.run {
+                    currentSongTitle = songInfo.title
+                    currentArtist = songInfo.artist
+                    isPlaying = currentPlaying
+                }
+            }
+        }
     }
     
     var body: some View {
@@ -365,6 +425,8 @@ struct PhotoDetailView: View {
             }
         }
         .task {
+            // 楽曲情報を即座に更新
+            await updateCurrentSongInfo()
             await loadAllImages()
             await setupMusicAndPlay()
         }

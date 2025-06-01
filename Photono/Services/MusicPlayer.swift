@@ -15,9 +15,47 @@ enum MusicPlayerError: Error {
 
 actor MusicPlayer {
     private let player = ApplicationMusicPlayer.shared
+    private var cachedSongInfo: (title: String, artist: String)? = nil
     
     var isPlaying: Bool {
         player.state.playbackStatus == .playing
+    }
+    
+    var playbackStatus: ApplicationMusicPlayer.PlaybackStatus {
+        player.state.playbackStatus
+    }
+    
+    var hasQueue: Bool {
+        !player.queue.entries.isEmpty
+    }
+    
+    var currentSongInfo: (title: String, artist: String)? {
+        
+        // まずキャッシュされた情報を返す
+        if let cached = cachedSongInfo {
+            return cached
+        }
+        
+        // まず現在のアイテムを直接取得してみる
+        if let playingItem = player.queue.currentEntry?.item {
+            
+            if let song = playingItem as? Song {
+                let songInfo = (title: song.title, artist: song.artistName)
+                cachedSongInfo = songInfo
+                return songInfo
+            }
+        }
+        
+        // 代替手段：エントリから直接取得
+        if let entries = player.queue.entries.first {
+            if let song = entries.item as? Song {
+                let songInfo = (title: song.title, artist: song.artistName)
+                cachedSongInfo = songInfo
+                return songInfo
+            }
+        }
+        
+        return nil
     }
     
     func setSong(with appleId: String) async throws {
@@ -37,7 +75,11 @@ actor MusicPlayer {
         player.state.repeatMode = .one
         try await player.prepareToPlay()
         
-        return (title: randomSong.title, artist: randomSong.artistName)
+        let songInfo = (title: randomSong.title, artist: randomSong.artistName)
+        cachedSongInfo = songInfo
+        print("🎵 Cached song info: \(songInfo)")
+        
+        return songInfo
     }
     
     func play() async throws {
