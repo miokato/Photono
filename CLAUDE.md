@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation References
+- Always refer to official Apple Developer Documentation
+- Follow iOS Human Interface Guidelines
+- Use latest iOS SDK best practices
+- Reference SwiftUI and UIKit documentation from developer.apple.com
+
+## Coding Standards
+- Use Swift 6.0+ features
+- Follow Apple's Swift API Design Guidelines
+- Implement proper memory management
+- Use modern concurrency patterns (async/await)
+
 ## Build Commands
 
 - **Build**: Open `Photono.xcodeproj` in Xcode and use `Cmd+B` to build
@@ -42,3 +54,4 @@ Photono is a SwiftUI-based iOS app that combines photo viewing and music playing
 - Services are single-purpose actors in `Services/`
 - Views follow feature-based organization with reusable components
 - Extensions and helpers are separated into dedicated folders
+
