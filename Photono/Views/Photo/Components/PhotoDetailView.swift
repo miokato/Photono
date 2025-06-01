@@ -8,6 +8,7 @@
 import SwiftUI
 import UIKit
 import CoreLocation
+import MusicKit
 
 struct PhotoDetailView: View {
     let photoAsset: PhotoAsset
@@ -15,12 +16,30 @@ struct PhotoDetailView: View {
     @State private var fullSizeImage: UIImage?
     @State private var isLoading = true
     @State private var showingInfo = false
+    @State private var musicPlayer = MusicPlayer()
+    @State private var isPlaying = false
     
     private func loadFullSizeImage() async {
         let image = await PhotoLibrary.shared.loadFullSizeImage(for: photoAsset)
         await MainActor.run {
             fullSizeImage = image
             isLoading = false
+        }
+    }
+    
+    private func setupMusicAndPlay() async {
+        do {
+            let status = await MusicAuthorization.request()
+            guard status == .authorized else { return }
+            
+            let sampleSongID = "1450695739"
+            try await musicPlayer.setSong(with: sampleSongID)
+            try await musicPlayer.play()
+            await MainActor.run {
+                isPlaying = true
+            }
+        } catch {
+            print("Music setup failed: \(error)")
         }
     }
     
@@ -47,6 +66,7 @@ struct PhotoDetailView: View {
         }
         .task {
             await loadFullSizeImage()
+            await setupMusicAndPlay()
         }
     }
     
