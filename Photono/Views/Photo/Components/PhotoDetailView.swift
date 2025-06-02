@@ -29,6 +29,9 @@ struct PhotoDetailView: View {
     @State private var isZoomed: Bool = false
     @State private var currentSongTitle: String = "Loading..."
     @State private var currentArtist: String = ""
+    @State private var playerOffset: CGSize = .zero
+    @State private var isDraggingPlayer = false
+    @State private var lastPlayerPosition: CGSize = .zero
     
     private var currentPhotoAsset: PhotoAsset {
         photos[currentIndex]
@@ -266,6 +269,57 @@ struct PhotoDetailView: View {
         }
     }
     
+    private func calculateSnapPosition(for geometry: GeometryProxy, with offset: CGSize) -> CGSize {
+        let screenWidth = geometry.size.width
+        let screenHeight = geometry.size.height
+        let playerHeight: CGFloat = 80 // Approximate height of MiniPlayerView
+        let playerWidth: CGFloat = screenWidth - 32 // Width with padding
+        let padding: CGFloat = 16
+        let safeArea = geometry.safeAreaInsets
+        
+        // Calculate the center position of the player with the current offset
+        let centerX = screenWidth / 2 + offset.width
+        let centerY = screenHeight - playerHeight / 2 - 20 - safeArea.bottom + offset.height
+        
+        // Define snap zones (edges of the screen)
+        let snapMargin: CGFloat = 100
+        
+        // Determine which edge to snap to
+        var finalOffset = offset
+        
+        // Horizontal snapping
+        if centerX < snapMargin {
+            // Snap to left edge
+            finalOffset.width = -(screenWidth / 2 - playerWidth / 2 - padding)
+        } else if centerX > screenWidth - snapMargin {
+            // Snap to right edge
+            finalOffset.width = screenWidth / 2 - playerWidth / 2 - padding
+        }
+        
+        // Vertical snapping
+        if centerY < snapMargin + safeArea.top {
+            // Snap to top edge
+            finalOffset.height = -(screenHeight - playerHeight - padding - safeArea.top - safeArea.bottom - 20)
+        } else if centerY > screenHeight - snapMargin - safeArea.bottom {
+            // Snap to bottom edge (original position)
+            finalOffset.height = 0
+        }
+        
+        // Corner snapping - if close to a corner, snap to both edges
+        let cornerSnapMargin: CGFloat = 150
+        if centerX < cornerSnapMargin && centerY < cornerSnapMargin + safeArea.top {
+            // Top-left corner
+            finalOffset.width = -(screenWidth / 2 - playerWidth / 2 - padding)
+            finalOffset.height = -(screenHeight - playerHeight - padding - safeArea.top - safeArea.bottom - 20)
+        } else if centerX > screenWidth - cornerSnapMargin && centerY < cornerSnapMargin + safeArea.top {
+            // Top-right corner
+            finalOffset.width = screenWidth / 2 - playerWidth / 2 - padding
+            finalOffset.height = -(screenHeight - playerHeight - padding - safeArea.top - safeArea.bottom - 20)
+        }
+        
+        return finalOffset
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -298,7 +352,7 @@ struct PhotoDetailView: View {
                         .opacity(dragOffset < 0 ? 1 : 0)
                 }
                 
-                // MiniPlayerView を画面下部に配置
+                // MiniPlayerView を画面下部に配置（ドラッグ可能）
                 VStack {
                     Spacer()
                     MiniPlayerView(
@@ -309,6 +363,32 @@ struct PhotoDetailView: View {
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, 20)
+                    .offset(x: playerOffset.width + lastPlayerPosition.width,
+                            y: playerOffset.height + lastPlayerPosition.height)
+                    .scaleEffect(isDraggingPlayer ? 1.05 : 1.0)
+                    .shadow(radius: isDraggingPlayer ? 15 : 10)
+                    .animation(.easeInOut(duration: 0.2), value: isDraggingPlayer)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                playerOffset = value.translation
+                                isDraggingPlayer = true
+                            }
+                            .onEnded { value in
+                                let totalOffset = CGSize(
+                                    width: lastPlayerPosition.width + value.translation.width,
+                                    height: lastPlayerPosition.height + value.translation.height
+                                )
+                                
+                                let snapPosition = calculateSnapPosition(for: geometry, with: totalOffset)
+                                
+                                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                                    lastPlayerPosition = snapPosition
+                                    playerOffset = .zero
+                                    isDraggingPlayer = false
+                                }
+                            }
+                    )
                 }
             }
         }
