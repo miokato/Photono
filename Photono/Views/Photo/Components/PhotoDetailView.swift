@@ -348,6 +348,116 @@ struct PhotoDetailView: View {
             }
     }
     
+    private func pinchGesture() -> some Gesture {
+        MagnificationGesture()
+            .onChanged { value in
+                // ベース倍率に対してピンチ倍率を適用
+                let newScale = baseZoomScale * value
+                zoomScale = max(0.5, min(5.0, newScale))
+                isZoomed = zoomScale > 1.0
+            }
+            .onEnded { value in
+                // 新しいベース倍率を保存
+                let newScale = baseZoomScale * value
+                
+                if newScale < 1.0 {
+                    // 1.0倍未満の場合はリセット
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        resetZoom()
+                    }
+                } else if newScale > 5.0 {
+                    // 5.0倍を超える場合は5.0倍に制限
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        zoomScale = 5.0
+                        baseZoomScale = 5.0
+                        isZoomed = true
+                    }
+                } else {
+                    // 通常の場合は新しいベース倍率として保存
+                    baseZoomScale = newScale
+                    zoomScale = newScale
+                    isZoomed = newScale > 1.0
+                }
+            }
+    }
+    
+    private func swipeGesture() -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                if !isTransitioning {
+                    if isZoomed {
+                        // ズーム時はパン操作
+                        zoomOffset = value.translation
+                    } else {
+                        // 通常時はスワイプ操作
+                        dragOffset = value.translation.width
+                    }
+                }
+            }
+            .onEnded { value in
+                if isTransitioning { return }
+                
+                if isZoomed {
+                    // ズーム時は画像境界内に収める
+                    let maxOffset: CGFloat = 100
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        zoomOffset.width = max(-maxOffset, min(maxOffset, zoomOffset.width))
+                        zoomOffset.height = max(-maxOffset, min(maxOffset, zoomOffset.height))
+                    }
+                } else {
+                    // 通常時はスワイプ判定
+                    let threshold: CGFloat = 100
+                    let velocity = value.predictedEndTranslation.width - value.translation.width
+                    
+                    if value.translation.width > threshold || velocity > 500 {
+                        // 右にスワイプ：前の写真
+                        if currentIndex > 0 {
+                            moveToPreviousPhoto()
+                        } else {
+                            // 最初の写真の場合は元に戻す
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                dragOffset = 0
+                            }
+                        }
+                    } else if value.translation.width < -threshold || velocity < -500 {
+                        // 左にスワイプ：次の写真
+                        if currentIndex < photos.count - 1 {
+                            moveToNextPhoto()
+                        } else {
+                            // 最後の写真の場合は元に戻す
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                dragOffset = 0
+                            }
+                        }
+                    } else {
+                        // 閾値に達しない場合は元に戻す
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            dragOffset = 0
+                        }
+                    }
+                }
+            }
+    }
+    
+    private func doubleTapAction() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if isZoomed {
+                resetZoom()
+            } else {
+                zoomScale = 2.0
+                baseZoomScale = 2.0
+                isZoomed = true
+            }
+        }
+    }
+    
+    private func compositeGesture() -> some Gesture {
+        SimultaneousGesture(
+            pinchGesture(),
+            swipeGesture()
+        )
+    }
+    
     // MARK: - body
     
     var body: some View {
@@ -367,108 +477,9 @@ struct PhotoDetailView: View {
         .sheet(isPresented: $showingInfo) {
             PhotoInfoView(photoAsset: currentPhotoAsset)
         }
-        .gesture(
-            SimultaneousGesture(
-                // ピンチジェスチャー（ズーム）
-                MagnificationGesture()
-                    .onChanged { value in
-                        // ベース倍率に対してピンチ倍率を適用
-                        let newScale = baseZoomScale * value
-                        zoomScale = max(0.5, min(5.0, newScale))
-                        isZoomed = zoomScale > 1.0
-                    }
-                    .onEnded { value in
-                        // 新しいベース倍率を保存
-                        let newScale = baseZoomScale * value
-                        
-                        if newScale < 1.0 {
-                            // 1.0倍未満の場合はリセット
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                resetZoom()
-                            }
-                        } else if newScale > 5.0 {
-                            // 5.0倍を超える場合は5.0倍に制限
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                zoomScale = 5.0
-                                baseZoomScale = 5.0
-                                isZoomed = true
-                            }
-                        } else {
-                            // 通常の場合は新しいベース倍率として保存
-                            baseZoomScale = newScale
-                            zoomScale = newScale
-                            isZoomed = newScale > 1.0
-                        }
-                    },
-                
-                // ドラッグジェスチャー
-                DragGesture()
-                    .onChanged { value in
-                        if !isTransitioning {
-                            if isZoomed {
-                                // ズーム時はパン操作
-                                zoomOffset = value.translation
-                            } else {
-                                // 通常時はスワイプ操作
-                                dragOffset = value.translation.width
-                            }
-                        }
-                    }
-                    .onEnded { value in
-                        if isTransitioning { return }
-                        
-                        if isZoomed {
-                            // ズーム時は画像境界内に収める
-                            let maxOffset: CGFloat = 100
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                zoomOffset.width = max(-maxOffset, min(maxOffset, zoomOffset.width))
-                                zoomOffset.height = max(-maxOffset, min(maxOffset, zoomOffset.height))
-                            }
-                        } else {
-                            // 通常時はスワイプ判定
-                            let threshold: CGFloat = 100
-                            let velocity = value.predictedEndTranslation.width - value.translation.width
-                            
-                            if value.translation.width > threshold || velocity > 500 {
-                                // 右にスワイプ：前の写真
-                                if currentIndex > 0 {
-                                    moveToPreviousPhoto()
-                                } else {
-                                    // 最初の写真の場合は元に戻す
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        dragOffset = 0
-                                    }
-                                }
-                            } else if value.translation.width < -threshold || velocity < -500 {
-                                // 左にスワイプ：次の写真
-                                if currentIndex < photos.count - 1 {
-                                    moveToNextPhoto()
-                                } else {
-                                    // 最後の写真の場合は元に戻す
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        dragOffset = 0
-                                    }
-                                }
-                            } else {
-                                // 閾値に達しない場合は元に戻す
-                                withAnimation(.easeOut(duration: 0.3)) {
-                                    dragOffset = 0
-                                }
-                            }
-                        }
-                    }
-            )
-        )
+        .gesture(compositeGesture())
         .onTapGesture(count: 2) {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                if isZoomed {
-                    resetZoom()
-                } else {
-                    zoomScale = 2.0
-                    baseZoomScale = 2.0
-                    isZoomed = true
-                }
-            }
+            doubleTapAction()
         }
         .task {
             // 楽曲情報を即座に更新
