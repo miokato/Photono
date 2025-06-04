@@ -14,24 +14,35 @@ struct PhotoDetailView: View {
     let photos: [PhotoAsset]
     @State var currentIndex: Int
     
+    // MARK: - Image States
     @State private var currentImage: UIImage?
     @State private var previousImage: UIImage?
     @State private var nextImage: UIImage?
     @State private var isLoading = true
-    @State private var showingInfo = false
-    @State private var musicPlayer = MusicPlayer()
-    @State private var isPlaying = false
+    
+    // MARK: - Navigation States
     @State private var dragOffset: CGFloat = 0
     @State private var isTransitioning = false
+    
+    // MARK: - Zoom States
     @State private var zoomScale: CGFloat = 1.0
     @State private var baseZoomScale: CGFloat = 1.0
     @State private var zoomOffset: CGSize = .zero
     @State private var isZoomed: Bool = false
+    
+    // MARK: - Music States
+    @State private var musicPlayer = MusicPlayer()
+    @State private var isPlaying = false
     @State private var currentSongTitle: String = "Loading..."
     @State private var currentArtist: String = ""
+    
+    // MARK: - UI States
+    @State private var showingInfo = false
     @State private var playerOffset: CGSize = .zero
     @State private var isDraggingPlayer = false
     @State private var lastPlayerPosition: CGSize = .zero
+    
+    // MARK: - methods
     
     private var currentPhotoAsset: PhotoAsset {
         photos[currentIndex]
@@ -88,28 +99,23 @@ struct PhotoDetailView: View {
         }
     }
     
-    private func loadPreviousImage() async {
-        if let prevAsset = previousPhotoAsset {
-            let image = await PhotoLibrary.shared.loadFullSizeImage(for: prevAsset)
+    private func loadAdjacentImage(photoAsset: PhotoAsset?, isNext: Bool) async {
+        if let asset = photoAsset {
+            let image = await PhotoLibrary.shared.loadFullSizeImage(for: asset)
             await MainActor.run {
-                previousImage = image
+                if isNext {
+                    nextImage = image
+                } else {
+                    previousImage = image
+                }
             }
         } else {
             await MainActor.run {
-                previousImage = nil
-            }
-        }
-    }
-    
-    private func loadNextImage() async {
-        if let nextAsset = nextPhotoAsset {
-            let image = await PhotoLibrary.shared.loadFullSizeImage(for: nextAsset)
-            await MainActor.run {
-                nextImage = image
-            }
-        } else {
-            await MainActor.run {
-                nextImage = nil
+                if isNext {
+                    nextImage = nil
+                } else {
+                    previousImage = nil
+                }
             }
         }
     }
@@ -203,7 +209,7 @@ struct PhotoDetailView: View {
             
             // 新しい前の写真のみロード
             Task {
-                await loadPreviousImage()
+                await loadAdjacentImage(photoAsset: previousPhotoAsset, isNext: false)
             }
         }
     }
@@ -236,7 +242,7 @@ struct PhotoDetailView: View {
             
             // 新しい次の写真のみロード
             Task {
-                await loadNextImage()
+                await loadAdjacentImage(photoAsset: nextPhotoAsset, isNext: true)
             }
         }
     }
@@ -320,76 +326,36 @@ struct PhotoDetailView: View {
         return finalOffset
     }
     
+    private func miniPlayerDragGesture(geometry: GeometryProxy) -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                playerOffset = value.translation
+                isDraggingPlayer = true
+            }
+            .onEnded { value in
+                let totalOffset = CGSize(
+                    width: lastPlayerPosition.width + value.translation.width,
+                    height: lastPlayerPosition.height + value.translation.height
+                )
+                
+                let snapPosition = calculateSnapPosition(for: geometry, with: totalOffset)
+                
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                    lastPlayerPosition = snapPosition
+                    playerOffset = .zero
+                    isDraggingPlayer = false
+                }
+            }
+    }
+    
+    // MARK: - body
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 Color.white.ignoresSafeArea()
-                
-                // 前の写真
-                if let prevImage = previousImage {
-                    photoImage(prevImage)
-                        .offset(x: -geometry.size.width + dragOffset)
-                        .opacity(dragOffset > 0 ? 1 : 0)
-                }
-                
-                // 現在の写真
-                if let currentImg = currentImage {
-                    photoImage(currentImg)
-                        .scaleEffect(zoomScale)
-                        .offset(x: dragOffset + zoomOffset.width, y: zoomOffset.height)
-                } else if isLoading {
-                    progressView
-                        .offset(x: dragOffset)
-                } else {
-                    placeholder
-                        .offset(x: dragOffset)
-                }
-                
-                // 次の写真
-                if let nextImg = nextImage {
-                    photoImage(nextImg)
-                        .offset(x: geometry.size.width + dragOffset)
-                        .opacity(dragOffset < 0 ? 1 : 0)
-                }
-                
-                // MiniPlayerView を画面下部に配置（ドラッグ可能）
-                VStack {
-                    Spacer()
-                    MiniPlayerView(
-                        musicPlayer: $musicPlayer,
-                        isPlaying: $isPlaying,
-                        currentSong: $currentSongTitle,
-                        currentArtist: $currentArtist
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 20)
-                    .offset(x: playerOffset.width + lastPlayerPosition.width,
-                            y: playerOffset.height + lastPlayerPosition.height)
-                    .scaleEffect(isDraggingPlayer ? 1.05 : 1.0)
-                    .shadow(radius: isDraggingPlayer ? 15 : 10)
-                    .animation(.easeInOut(duration: 0.2), value: isDraggingPlayer)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                playerOffset = value.translation
-                                isDraggingPlayer = true
-                            }
-                            .onEnded { value in
-                                let totalOffset = CGSize(
-                                    width: lastPlayerPosition.width + value.translation.width,
-                                    height: lastPlayerPosition.height + value.translation.height
-                                )
-                                
-                                let snapPosition = calculateSnapPosition(for: geometry, with: totalOffset)
-                                
-                                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                                    lastPlayerPosition = snapPosition
-                                    playerOffset = .zero
-                                    isDraggingPlayer = false
-                                }
-                            }
-                    )
-                }
+                photoCarousel(geometry: geometry)
+                miniPlayerOverlay(geometry: geometry)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -509,6 +475,61 @@ struct PhotoDetailView: View {
             await updateCurrentSongInfo()
             await loadAllImages()
             await setupMusicAndPlay()
+        }
+    }
+    
+    // MARK: - View builders
+    
+    @ViewBuilder
+    private func photoCarousel(geometry: GeometryProxy) -> some View {
+        ZStack {
+            // 前の写真
+            if let prevImage = previousImage {
+                photoImage(prevImage)
+                    .offset(x: -geometry.size.width + dragOffset)
+                    .opacity(dragOffset > 0 ? 1 : 0)
+            }
+            
+            // 現在の写真
+            if let currentImg = currentImage {
+                photoImage(currentImg)
+                    .scaleEffect(zoomScale)
+                    .offset(x: dragOffset + zoomOffset.width, y: zoomOffset.height)
+            } else if isLoading {
+                progressView
+                    .offset(x: dragOffset)
+            } else {
+                placeholder
+                    .offset(x: dragOffset)
+            }
+            
+            // 次の写真
+            if let nextImg = nextImage {
+                photoImage(nextImg)
+                    .offset(x: geometry.size.width + dragOffset)
+                    .opacity(dragOffset < 0 ? 1 : 0)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func miniPlayerOverlay(geometry: GeometryProxy) -> some View {
+        VStack {
+            Spacer()
+            MiniPlayerView(
+                musicPlayer: $musicPlayer,
+                isPlaying: $isPlaying,
+                currentSong: $currentSongTitle,
+                currentArtist: $currentArtist
+            )
+            .padding(.horizontal, 16)
+            .padding(.bottom, 20)
+            .offset(x: playerOffset.width + lastPlayerPosition.width,
+                    y: playerOffset.height + lastPlayerPosition.height)
+            .scaleEffect(isDraggingPlayer ? 1.05 : 1.0)
+            .shadow(radius: isDraggingPlayer ? 15 : 10)
+            .animation(.easeInOut(duration: 0.2), value: isDraggingPlayer)
+            .gesture(miniPlayerDragGesture(geometry: geometry))
         }
     }
     
